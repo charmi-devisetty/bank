@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ICICI - Demo Bank</title>
+  <style>
+    :root{--brand:#ff6a00;--dark:#05204a;--muted:#6b7280}
+    *{box-sizing:border-box}
+    body{font-family:Inter,system-ui,Segoe UI,Roboto,Arial;margin:0;color:#0b1726}
+    header{background:linear-gradient(90deg,var(--brand),#ff8a33);color:white;padding:18px 24px;display:flex;align-items:center;justify-content:space-between}
+    .logo{display:flex;align-items:center;gap:12px;font-weight:700}
+    .logo .mark{width:44px;height:44px;background:white;border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--brand);font-weight:800}
+    nav a{color:rgba(255,255,255,.95);text-decoration:none;margin-left:18px;font-weight:600}
+    main{display:grid;grid-template-columns:1fr 420px;gap:28px;padding:28px;max-width:1200px;margin:18px auto}
+
+    /* hero */
+    .hero{background:#fff;border-radius:12px;padding:28px;box-shadow:0 6px 18px rgba(10,25,47,.06)}
+    .hero h1{margin:0 0 8px;font-size:22px;color:var(--dark)}
+    .hero p{margin:0;color:var(--muted)}
+    .cards{display:flex;gap:14px;margin-top:18px}
+    .card{flex:1;padding:16px;border-radius:10px;border:1px solid #eef2f7}
+
+    /* sidebar */
+    .sidebar{position:sticky;top:18px}
+    .panel{background:linear-gradient(180deg,#fff,#fbfdff);padding:18px;border-radius:12px;box-shadow:0 6px 18px rgba(10,25,47,.04)}
+    label{display:block;font-size:13px;color:var(--muted);margin-top:10px}
+    input,select,button{width:100%;padding:10px;margin-top:6px;border-radius:8px;border:1px solid #e6eef7;font-size:14px}
+    button{cursor:pointer;background:var(--brand);color:white;border:0}
+    .log{height:200px;overflow:auto;background:#0b1726;color:white;padding:10px;border-radius:8px;margin-top:12px;font-family:monospace;font-size:13px}
+
+    footer{max-width:1200px;margin:18px auto;color:var(--muted);font-size:13px;padding:12px}
+    @media(max-width:900px){main{grid-template-columns:1fr;padding:18px}}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo"><div class="mark">IB</div><div>ICICI — Demo</div></div>
+    <nav>
+      <a href="#">Accounts</a>
+      <a href="#">Payments</a>
+      <a href="#">Support</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <h1>Welcome to ICICI Demo Bank</h1>
+      <p>Simple banking demo site showing account creation, deposits, withdrawals and transfers. All actions handled by a single BankServer instance using Factory + Builder patterns (constructor is private).</p>
+
+      <div class="cards">
+        <div class="card">
+          <strong>Fast Accounts</strong>
+          <div style="margin-top:8px;color:var(--muted);font-size:13px">Create customer accounts quickly with a builder pattern.</div>
+        </div>
+        <div class="card">
+          <strong>Secure Transactions</strong>
+          <div style="margin-top:8px;color:var(--muted);font-size:13px">All transactions routed through a single BankServer (singleton).</div>
+        </div>
+        <div class="card">
+          <strong>Extensible</strong>
+          <div style="margin-top:8px;color:var(--muted);font-size:13px">Factory generates transaction objects so adding new types is easy.</div>
+        </div>
+      </div>
+
+      <hr style="margin:18px 0;border:none;border-top:1px dashed #eef3fb">
+
+      <div>
+        <strong>Quick demo</strong>
+        <div style="margin-top:8px;color:var(--muted);font-size:13px">Use the panel on the right to create accounts and run transactions. Console/log below shows events.</div>
+      </div>
+
+    </section>
+
+    <aside class="sidebar">
+      <div class="panel">
+        <strong>Create Account</strong>
+        <label for="owner">Owner name</label>
+        <input id="owner" placeholder="e.g. Ravi Kumar" />
+        <label for="type">Account type</label>
+        <select id="type"><option value="savings">Savings</option><option value="current">Current</option></select>
+        <label for="initial">Initial deposit (₹)</label>
+        <input id="initial" type="number" value="1000" />
+        <button id="createAccount">Create Account</button>
+
+        <hr style="margin:12px 0;border:none;border-top:1px solid #f1f5f9">
+
+        <strong>Transaction</strong>
+        <label for="from">From (account id)</label>
+        <input id="from" placeholder="e.g. acc_1" />
+        <label for="to">To (account id - for transfer)</label>
+        <input id="to" placeholder="e.g. acc_2" />
+        <label for="amount">Amount (₹)</label>
+        <input id="amount" type="number" value="100" />
+        <label for="txType">Type</label>
+        <select id="txType"><option value="deposit">Deposit</option><option value="withdraw">Withdraw</option><option value="transfer">Transfer</option></select>
+        <button id="runTx">Run Transaction</button>
+
+        <div class="log" id="log">System ready — BankServer not initialized yet.</div>
+      </div>
+    </aside>
+  </main>
+
+  <footer>Demo site — not affiliated with ICICI Bank. For learning & design only.</footer>
+
+  <script>
+    /*************************************************************************
+     * BankServer (Singleton) with private constructor + Account Builder +
+     * Transaction Factory.
+     * - BankServer is created via getInstance() only.
+     * - AccountBuilder builds account objects.
+     * - TransactionFactory creates typed transaction objects.
+     *************************************************************************/
+
+    // --- Utility logger ---
+    const logEl = document.getElementById('log');
+    function log(...args){
+      const time = new Date().toLocaleTimeString();
+      logEl.textContent = time + '  ' + args.join(' ') + '\n' + logEl.textContent;
+    }
+
+    // --- AccountBuilder (Builder pattern) ---
+    class Account {
+      constructor({id, owner, type, balance}){
+        this.id = id; this.owner = owner; this.type = type; this.balance = balance;
+      }
+    }
+
+    class AccountBuilder {
+      constructor(){
+        this._id = 'acc_' + Math.random().toString(36).slice(2,8);
+        this._owner = 'Unnamed';
+        this._type = 'savings';
+        this._balance = 0;
+      }
+      withId(id){ this._id = id; return this }
+      withOwner(name){ this._owner = name; return this }
+      withType(type){ this._type = type; return this }
+      withBalance(amount){ this._balance = Number(amount) || 0; return this }
+      build(){
+        return new Account({id:this._id, owner:this._owner, type:this._type, balance:this._balance});
+      }
+    }
+
+    // --- Transaction Factory ---
+    class Deposit { constructor({accountId, amount}){ this.type='deposit'; this.accountId=accountId; this.amount=amount }}
+    class Withdraw{ constructor({accountId, amount}){ this.type='withdraw'; this.accountId=accountId; this.amount=amount }}
+    class Transfer{ constructor({from,to,amount}){ this.type='transfer'; this.from=from; this.to=to; this.amount=amount }}
+
+    const TransactionFactory = {
+      create(type, payload){
+        switch(type){
+          case 'deposit': return new Deposit(payload);
+          case 'withdraw': return new Withdraw(payload);
+          case 'transfer': return new Transfer(payload);
+          default: throw new Error('Unknown tx type: '+type);
+        }
+      }
+    };
+
+    // --- BankServer (Singleton with private constructor emulation) ---
+    const BankServer = (function(){
+      // private flag to prevent direct construction
+      let _allowConstruct = false;
+      let _instance = null;
+
+      class _BankServer {
+        constructor(){
+          if(!_allowConstruct) throw new Error('BankServer constructor is private. Use BankServer.getInstance()');
+          this.accounts = new Map();
+          this.txLog = [];
+        }
+
+        createAccount(account){
+          if(this.accounts.has(account.id)) throw new Error('Account exists: '+account.id);
+          this.accounts.set(account.id, account);
+          log('Account created', account.id, account.owner, 'bal:₹' + account.balance);
+          return account;
+        }
+
+        getAccount(id){ return this.accounts.get(id) }
+
+        handleTransaction(tx){
+          // tx is created by TransactionFactory
+          if(tx.type === 'deposit'){
+            const a = this.getAccount(tx.accountId); if(!a) throw new Error('Account not found: '+tx.accountId);
+            a.balance += Number(tx.amount);
+            this.txLog.push({tx, time:Date.now()});
+            log('Deposit', tx.accountId, '₹'+tx.amount, '-> bal:₹'+a.balance);
+            return a.balance;
+          }
+          if(tx.type === 'withdraw'){
+            const a = this.getAccount(tx.accountId); if(!a) throw new Error('Account not found: '+tx.accountId);
+            if(a.balance < tx.amount) throw new Error('Insufficient funds');
+            a.balance -= Number(tx.amount);
+            this.txLog.push({tx, time:Date.now()});
+            log('Withdraw', tx.accountId, '₹'+tx.amount, '-> bal:₹'+a.balance);
+            return a.balance;
+          }
+          if(tx.type === 'transfer'){
+            const from = this.getAccount(tx.from); const to = this.getAccount(tx.to);
+            if(!from || !to) throw new Error('Account(s) not found');
+            if(from.balance < tx.amount) throw new Error('Insufficient funds');
+            from.balance -= Number(tx.amount); to.balance += Number(tx.amount);
+            this.txLog.push({tx, time:Date.now()});
+            log('Transfer', tx.amount, 'from', tx.from, 'to', tx.to, '-> bal:', tx.from+':₹'+from.balance, tx.to+':₹'+to.balance);
+            return {from:from.balance, to:to.balance};
+          }
+          throw new Error('Unsupported tx');
+        }
+
+        listAccounts(){ return Array.from(this.accounts.values()) }
+        listTx(){ return this.txLog.slice().reverse() }
+      }
+
+      return {
+        // public accessor
+        getInstance(){
+          if(!_instance){ _allowConstruct = true; _instance = new _BankServer(); _allowConstruct = false; log('BankServer instance created'); }
+          return _instance;
+        }
+      };
+    })();
+
+    // --- UI wiring ---
+    document.getElementById('createAccount').addEventListener('click', ()=>{
+      try{
+        const owner = document.getElementById('owner').value.trim() || 'Unnamed';
+        const type = document.getElementById('type').value;
+        const initial = Number(document.getElementById('initial').value) || 0;
+        const builder = new AccountBuilder().withOwner(owner).withType(type).withBalance(initial);
+        const account = builder.build();
+        const bank = BankServer.getInstance();
+        bank.createAccount(account);
+        // show id in input to make demo easier
+        document.getElementById('from').value = account.id;
+        log('Created account id:', account.id);
+      }catch(e){ log('Error:', e.message) }
+    });
+
+    document.getElementById('runTx').addEventListener('click', ()=>{
+      try{
+        const bank = BankServer.getInstance();
+        const type = document.getElementById('txType').value;
+        const from = document.getElementById('from').value.trim();
+        const to = document.getElementById('to').value.trim();
+        const amount = Number(document.getElementById('amount').value) || 0;
+        let tx;
+        if(type === 'deposit') tx = TransactionFactory.create('deposit',{accountId:from,amount});
+        else if(type === 'withdraw') tx = TransactionFactory.create('withdraw',{accountId:from,amount});
+        else if(type === 'transfer') tx = TransactionFactory.create('transfer',{from, to, amount});
+        const res = bank.handleTransaction(tx);
+        log('Transaction success', JSON.stringify(res));
+      }catch(e){ log('Transaction error:', e.message) }
+    });
+
+    // --- demo setup: create two sample accounts automatically ---
+    (function demoSeed(){
+      const bank = BankServer.getInstance();
+      const a1 = new AccountBuilder().withOwner('Ravi Kumar').withType('savings').withBalance(5000).build();
+      const a2 = new AccountBuilder().withOwner('Anita Sharma').withType('current').withBalance(3000).build();
+      bank.createAccount(a1); bank.createAccount(a2);
+      log('Seeded accounts:', a1.id, a2.id);
+      document.getElementById('from').value = a1.id; document.getElementById('to').value = a2.id;
+    })();
+
+  </script>
+</body>
+</html>
