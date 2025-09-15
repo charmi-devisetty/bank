@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ICICI Bank — Demo Banking App</title>
+  <style>
+    :root{--primary:#d22f2f;--dark:#0f1724;--muted:#6b7280;--card:#ffffff}
+    *{box-sizing:border-box;font-family:Inter,Segoe UI,Roboto,Arial}
+    body{margin:0;background:linear-gradient(180deg,#f3f6fb 0%,#ffffff 100%);color:#0b1220}
+    header{background:var(--primary);color:white;padding:18px 32px;display:flex;align-items:center;justify-content:space-between}
+    header h1{margin:0;font-size:20px;letter-spacing:0.5px}
+    .container{max-width:1100px;margin:28px auto;padding:0 18px}
+    .grid{display:grid;grid-template-columns:320px 1fr;gap:20px}
+    .card{background:var(--card);border-radius:12px;padding:18px;box-shadow:0 6px 18px rgba(12,30,50,0.06)}
+    .sidebar .logo{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+    .logo .brand{font-weight:700}
+    .nav{display:flex;flex-direction:column;gap:8px}
+    .nav button{background:transparent;border:0;padding:10px 12px;text-align:left;border-radius:8px;cursor:pointer}
+    .nav button.active{background:#f8f9fb}
+    .profile{display:flex;align-items:center;gap:12px}
+    .profile .avatar{width:44px;height:44px;border-radius:10px;background:linear-gradient(45deg,#fff 0,#f3f3f3 100%);display:flex;align-items:center;justify-content:center;font-weight:700}
+    form .row{display:flex;gap:10px}
+    input,select{width:100%;padding:10px;border-radius:8px;border:1px solid #e6e9ef}
+    button.cta{background:var(--primary);color:white;padding:10px 14px;border-radius:8px;border:0;cursor:pointer}
+    .actions{display:flex;gap:8px;flex-wrap:wrap}
+    table{width:100%;border-collapse:collapse}
+    td,th{padding:8px;border-bottom:1px solid #f0f2f5;text-align:left}
+    .muted{color:var(--muted);font-size:13px}
+    .balance{font-size:28px;font-weight:700}
+    .footer{margin-top:18px;color:var(--muted);font-size:13px}
+    @media(max-width:840px){.grid{grid-template-columns:1fr}.sidebar{order:2}}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>ICICI Bank — Demo</h1>
+    <div class="profile muted">Demo banking app • Singleton BankServer</div>
+  </header>
+
+  <div class="container">
+    <div class="grid">
+      <aside class="card sidebar">
+        <div class="logo"><div class="avatar" style="width:36px;height:36px;border-radius:8px;background:white;color:var(--primary);display:flex;align-items:center;justify-content:center;font-weight:800">IB</div><div class="brand">ICICI Demo</div></div>
+        <div class="nav" role="navigation">
+          <button id="dashBtn" class="active">Dashboard</button>
+          <button id="acctBtn">Create Account</button>
+          <button id="transBtn">Transactions</button>
+          <button id="logoutBtn">Logout</button>
+        </div>
+        <hr style="margin:12px 0;border:none;border-top:1px solid #f0f2f5">
+        <div class="muted">Local demo — data stored in browser localStorage.</div>
+      </aside>
+
+      <main>
+        <section id="dashboard" class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <div>
+              <div class="muted">Welcome back,</div>
+              <div id="usernameDisplay" style="font-weight:700">Guest</div>
+            </div>
+            <div style="text-align:right">
+              <div class="muted">Account balance</div>
+              <div class="balance" id="balanceDisplay">₹0.00</div>
+            </div>
+          </div>
+
+          <div class="actions" style="margin-bottom:12px">
+            <button class="cta" id="depositBtn">Deposit</button>
+            <button class="cta" id="withdrawBtn">Withdraw</button>
+            <button class="cta" id="transferBtn">Transfer</button>
+          </div>
+
+          <div id="quickActions" class="card" style="padding:12px">
+            <div class="muted">Quick recent transactions</div>
+            <div id="recentList" style="margin-top:8px">No transactions yet.</div>
+          </div>
+
+          <div class="footer">Use the "Create Account" panel to add a demo account. This demo uses a BankServer implemented as a singleton in JavaScript.</div>
+        </section>
+
+        <section id="createAccount" class="card" style="display:none">
+          <h3>Create / Login Account</h3>
+          <form id="createForm">
+            <div class="row">
+              <input type="text" id="name" placeholder="Full name" required>
+              <input type="text" id="accNo" placeholder="Account number (numeric)" required>
+            </div>
+            <div class="row" style="margin-top:8px">
+              <input type="password" id="pin" placeholder="4-digit PIN" required>
+              <select id="acType"><option value="savings">Savings</option><option value="current">Current</option></select>
+            </div>
+            <div style="margin-top:10px;display:flex;gap:8px">
+              <button class="cta" type="submit">Create Account</button>
+              <button type="button" id="loginBtn">Login</button>
+            </div>
+            <div id="formMsg" class="muted" style="margin-top:8px"></div>
+          </form>
+        </section>
+
+        <section id="transactions" class="card" style="display:none">
+          <h3>Transactions</h3>
+          <div style="margin-bottom:12px;display:flex;gap:8px">
+            <input id="amount" type="number" placeholder="Amount">
+            <input id="toAcc" type="text" placeholder="To Account (for transfer)">
+            <input id="pinConfirm" type="password" placeholder="PIN">
+          </div>
+          <div style="display:flex;gap:8px;margin-bottom:12px">
+            <button class="cta" id="doDeposit">Deposit</button>
+            <button class="cta" id="doWithdraw">Withdraw</button>
+            <button class="cta" id="doTransfer">Transfer</button>
+          </div>
+
+          <h4>All Transactions</h4>
+          <div style="overflow:auto;max-height:300px">
+            <table>
+              <thead><tr><th>Time</th><th>Type</th><th>Amount</th><th>From</th><th>To</th></tr></thead>
+              <tbody id="txTable"><tr><td colspan="5" class="muted">No transactions</td></tr></tbody>
+            </table>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <script>
+    // -------------------------
+    // BankServer singleton
+    // -------------------------
+    const BankServer = (function(){
+      // private variables in closure
+      let instance = null;
+
+      // private constructor function (not accessible from outside)
+      function BankManager(){
+        // internal storage
+        this._accounts = JSON.parse(localStorage.getItem('icici_demo_accounts') || '{}');
+        this._transactions = JSON.parse(localStorage.getItem('icici_demo_transactions') || '[]');
+      }
+
+      // private helpers
+      function saveState(obj){
+        localStorage.setItem('icici_demo_accounts', JSON.stringify(obj._accounts));
+        localStorage.setItem('icici_demo_transactions', JSON.stringify(obj._transactions));
+      }
+
+      // public API
+      const proto = BankManager.prototype;
+
+      proto.createAccount = function(accNo, name, pin, type='savings'){
+        if(!/^[0-9]+$/.test(accNo)) throw new Error('Account number must be numeric');
+        if(this._accounts[accNo]) throw new Error('Account already exists');
+        this._accounts[accNo] = {accNo,name,pin:pin+'',type,balance:0,createdAt:new Date().toISOString()};
+        saveState(this);
+        return this._accounts[accNo];
+      };
+
+      proto.login = function(accNo,pin){
+        const a=this._accounts[accNo];
+        if(!a) throw new Error('Account not found');
+        if(a.pin !== pin+'') throw new Error('Invalid PIN');
+        return a;
+      };
+
+      proto.deposit = function(accNo,amount){
+        amount = Number(amount);
+        if(amount<=0) throw new Error('Amount must be positive');
+        const a=this._accounts[accNo]; if(!a) throw new Error('Account not found');
+        a.balance = Number(a.balance)+amount;
+        const tx={time:new Date().toISOString(),type:'DEPOSIT',amount,from:accNo,to:accNo};
+        this._transactions.unshift(tx);
+        saveState(this);
+        return tx;
+      };
+
+      proto.withdraw = function(accNo,amount){
+        amount = Number(amount);
+        if(amount<=0) throw new Error('Amount must be positive');
+        const a=this._accounts[accNo]; if(!a) throw new Error('Account not found');
+        if(Number(a.balance) < amount) throw new Error('Insufficient funds');
+        a.balance = Number(a.balance)-amount;
+        const tx={time:new Date().toISOString(),type:'WITHDRAW',amount,from:accNo,to:accNo};
+        this._transactions.unshift(tx);
+        saveState(this);
+        return tx;
+      };
+
+      proto.transfer = function(fromAcc,toAcc,amount){
+        amount = Number(amount);
+        if(amount<=0) throw new Error('Amount must be positive');
+        const aFrom=this._accounts[fromAcc]; const aTo=this._accounts[toAcc];
+        if(!aFrom) throw new Error('Sender account not found');
+        if(!aTo) throw new Error('Recipient account not found');
+        if(Number(aFrom.balance) < amount) throw new Error('Insufficient funds');
+        aFrom.balance = Number(aFrom.balance)-amount;
+        aTo.balance = Number(aTo.balance)+amount;
+        const tx={time:new Date().toISOString(),type:'TRANSFER',amount,from:fromAcc,to:toAcc};
+        this._transactions.unshift(tx);
+        saveState(this);
+        return tx;
+      };
+
+      proto.getTransactions = function(limit=50){
+        return this._transactions.slice(0,limit);
+      };
+
+      proto.getAccount = function(accNo){
+        return this._accounts[accNo] || null;
+      };
+
+      // the exposed factory that ensures only one instance is created
+      return {
+        getInstance: function(){
+          if(!instance) instance = new BankManager();
+          return instance;
+        },
+        // helper for demo/testing: reset storage (not recommended in production)
+        _resetDemoStorage: function(){ localStorage.removeItem('icici_demo_accounts'); localStorage.removeItem('icici_demo_transactions'); instance = null; }
+      };
+    })();
+
+    // -------------------------
+    // UI logic
+    // -------------------------
+    const bs = BankServer.getInstance();
+    let currentAcc = null;
+
+    // elements
+    const dashBtn=document.getElementById('dashBtn');
+    const acctBtn=document.getElementById('acctBtn');
+    const transBtn=document.getElementById('transBtn');
+    const logoutBtn=document.getElementById('logoutBtn');
+    const dashboard=document.getElementById('dashboard');
+    const createAccount=document.getElementById('createAccount');
+    const transactions=document.getElementById('transactions');
+    const usernameDisplay=document.getElementById('usernameDisplay');
+    const balanceDisplay=document.getElementById('balanceDisplay');
+    const recentList=document.getElementById('recentList');
+
+    function showPanel(panel){[dashboard,createAccount,transactions].forEach(p=>p.style.display='none');panel.style.display='block';}
+
+    dashBtn.onclick=()=>{showPanel(dashboard);}
+    acctBtn.onclick=()=>{showPanel(createAccount);}
+    transBtn.onclick=()=>{showPanel(transactions);renderTransactions();}
+    logoutBtn.onclick=()=>{currentAcc=null;renderUI();showPanel(dashboard);}
+
+    document.getElementById('createForm').addEventListener('submit',e=>{
+      e.preventDefault();
+      const name=document.getElementById('name').value.trim();
+      const accNo=document.getElementById('accNo').value.trim();
+      const pin=document.getElementById('pin').value.trim();
+      const type=document.getElementById('acType').value;
+      const msg=document.getElementById('formMsg');
+      try{
+        bs.createAccount(accNo,name,pin,type);
+        msg.textContent='Account created. You are now logged in.';
+        currentAcc = bs.login(accNo,pin);
+        renderUI();
+        showPanel(dashboard);
+      }catch(err){msg.textContent=err.message}
+    });
+
+    document.getElementById('loginBtn').addEventListener('click',()=>{
+      const accNo=document.getElementById('accNo').value.trim();
+      const pin=document.getElementById('pin').value.trim();
+      const msg=document.getElementById('formMsg');
+      try{ currentAcc = bs.login(accNo,pin); msg.textContent='Logged in.'; renderUI(); showPanel(dashboard);}catch(err){msg.textContent=err.message}
+    });
+
+    // transaction buttons
+    document.getElementById('depositBtn').addEventListener('click',()=>{ showPanel(transactions); document.getElementById('amount').value=''; });
+    document.getElementById('withdrawBtn').addEventListener('click',()=>{ showPanel(transactions); document.getElementById('amount').value=''; });
+    document.getElementById('transferBtn').addEventListener('click',()=>{ showPanel(transactions); document.getElementById('amount').value=''; });
+
+    document.getElementById('doDeposit').addEventListener('click',()=>{
+      const amt=document.getElementById('amount').value; const pin=document.getElementById('pinConfirm').value;
+      if(!currentAcc){alert('Login first'); return}
+      try{ if(currentAcc.pin !== pin) throw new Error('Invalid PIN'); bs.deposit(currentAcc.accNo,amt); currentAcc = bs.getAccount(currentAcc.accNo); renderUI(); renderTransactions(); alert('Deposit successful'); }catch(err){alert(err.message)}
+    });
+
+    document.getElementById('doWithdraw').addEventListener('click',()=>{
+      const amt=document.getElementById('amount').value; const pin=document.getElementById('pinConfirm').value;
+      if(!currentAcc){alert('Login first'); return}
+      try{ if(currentAcc.pin !== pin) throw new Error('Invalid PIN'); bs.withdraw(currentAcc.accNo,amt); currentAcc = bs.getAccount(currentAcc.accNo); renderUI(); renderTransactions(); alert('Withdraw successful'); }catch(err){alert(err.message)}
+    });
+
+    document.getElementById('doTransfer').addEventListener('click',()=>{
+      const amt=document.getElementById('amount').value; const toAcc=document.getElementById('toAcc').value.trim(); const pin=document.getElementById('pinConfirm').value;
+      if(!currentAcc){alert('Login first'); return}
+      try{ if(currentAcc.pin !== pin) throw new Error('Invalid PIN'); bs.transfer(currentAcc.accNo,toAcc,amt); currentAcc = bs.getAccount(currentAcc.accNo); renderUI(); renderTransactions(); alert('Transfer successful'); }catch(err){alert(err.message)}
+    });
+
+    function renderUI(){
+      if(currentAcc){
+        usernameDisplay.textContent = currentAcc.name + ' (' + currentAcc.accNo + ')';
+        balanceDisplay.textContent = '₹' + Number(currentAcc.balance).toFixed(2);
+        // recent
+        const tx = bs.getTransactions(5);
+        if(tx.length===0) recentList.innerHTML='No transactions yet.';
+        else recentList.innerHTML = tx.slice(0,5).map(t=>`<div style="padding:6px 0;border-bottom:1px dashed #f0f2f5"><div style="font-weight:600">${t.type} • ₹${Number(t.amount).toFixed(2)}</div><div class="muted" style="font-size:12px">${new Date(t.time).toLocaleString()}</div></div>`).join('');
+      }else{
+        usernameDisplay.textContent='Guest'; balanceDisplay.textContent='₹0.00'; recentList.innerHTML='Login or create an account.';
+      }
+    }
+
+    function renderTransactions(){
+      const rows = bs.getTransactions(100);
+      const tb = document.getElementById('txTable');
+      if(rows.length===0){tb.innerHTML='<tr><td colspan="5" class="muted">No transactions</td></tr>'}
+      else tb.innerHTML = rows.map(r=>`<tr><td>${new Date(r.time).toLocaleString()}</td><td>${r.type}</td><td>₹${Number(r.amount).toFixed(2)}</td><td>${r.from}</td><td>${r.to}</td></tr>`).join('');
+    }
+
+    // initial render
+    renderUI();
+    renderTransactions();
+
+    // for demo: keyboard shortcut to reset demo storage (Ctrl+Shift+R)
+    document.addEventListener('keydown',e=>{ if(e.ctrlKey && e.shiftKey && e.code==='KeyR'){ if(confirm('Reset demo data?')){ BankServer._resetDemoStorage(); location.reload(); } } });
+  </script>
+</body>
+</html>
